@@ -1,10 +1,10 @@
-# 星萤AstrBot（Android 应用 + 部署资产）
+# 星枢（Aster Nexus）
 
 在手机上本地运行 **AstrBot + SnowLuma** 的完整方案，**应用与部署资产在同一个仓库**。
 
-- 应用名：**星萤AstrBot**
+- 应用名：**星枢**
 - 包名：`com.firefiy99.astrbot_snow`
-- 当前版本：`1.0.6-xingying.1`（versionCode 12）
+- 当前版本：`1.0.8`（versionCode 14）
 - 作者：**小星萤** ｜ QQ **3010009516** ｜ [@firefiy99](https://github.com/firefiy99)
 
 ## 下载
@@ -13,7 +13,7 @@
 
 | 资产 | 用途 |
 |---|---|
-| `xingying-astrbot-v1.0.6-xingying.1.apk` | **Android 安装包**（约 90 MB，V1/V2/V3 已签名） |
+| `shuxi-v1.0.8.apk` | **Android 安装包**（约 90 MB，V1/V2/V3 已签名） |
 | `astrbot-installer-v1.1.0.tar.gz` | 安装脚本包（Ed25519 验签） |
 | `manifest.json` / `manifest.sig` | 清单与签名 |
 | `snowluma-guest-v1.0.0.tar.xz` | 虚拟机系统包（内核 + initramfs + rootfs，约 93 MB） |

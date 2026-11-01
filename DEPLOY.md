@@ -1,4 +1,4 @@
-# 星萤AstrBot · 手机本地部署版
+# 星枢 · 手机本地部署版
 
 在 **Android 手机上本地运行 AstrBot + SnowLuma** 的完整部署方案（含配套 Android 应用）。
 

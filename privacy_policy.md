@@ -1,4 +1,4 @@
-# 隐私政策与免责声明
+# 星枢 · 隐私政策与免责声明
 
 更新日期：**2026/11/01**
 生效日期：**2026/11/01**
@@ -9,6 +9,24 @@
 - 如您通过付费渠道获取本应用，请立即向相关平台举报
 - 官方获取渠道：[GitHub 项目页面](https://github.com/firefiy99/lyra-astrbot-snowluma-app)
 - 本应用基于开源项目构建，遵循相应开源许可；应用内集成的第三方组件版权归其各自作者所有
+
+## 开源致谢
+
+本应用是在开源社区的成果上完成的，特此向原版作者与上游项目致谢：
+
+- **MuFengDR** —— 原版 Android 应用《AstrBot泡泡版》（AstrBot-Bubble-Android-App）的作者。
+  本应用的界面骨架、安装引导流程、安装器（含 Ed25519 验签设计）均源自该项目，
+  在此表示诚挚感谢。
+- **zz6zz666**、**AAswordman** —— 上游 AstrBot-Android-App 的作者，本项目的最初源头。
+- **AstrBot 官方团队** —— 聊天机器人框架 [AstrBot](https://github.com/AstrBotDevs/AstrBot)。
+- **SnowLuma 项目组** —— QQ 互操作运行时 [SnowLuma](https://github.com/SnowLuma/SnowLuma)。
+- **QEMU 项目**、**Debian**、**Ubuntu** —— 虚拟机与 Linux 系统环境。
+- **腾讯公司** —— Linux 版 QQ 客户端。
+
+本应用在上述项目基础上进行了架构调整（PRoot + QEMU 双环境、SnowLuma 替代 NapCat）
+与界面品牌调整，但**原作者的著作权与署名权完整保留**。各项目的使用遵循其各自许可协议。
+
+---
 
 ## 免责声明
 
