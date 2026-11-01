@@ -4,7 +4,7 @@
 
 - 应用名：**星萤AstrBot**
 - 包名：`com.firefiy99.astrbot_snow`
-- 版本：`1.0.0-xingying.1`（versionCode 6）
+- 版本：`1.0.1-xingying.1`（versionCode 7）
 - 作者：**小星萤** ｜ QQ **3010009516** ｜ [@firefiy99](https://github.com/firefiy99)
 
 ## 下载
@@ -13,7 +13,7 @@
 
 | 文件 | 说明 |
 |---|---|
-| `星萤AstrBot-v1.0.0-xingying.1.apk` | 完整安装包（约 90 MB，V1/V2/V3 已签名） |
+| `星萤AstrBot-v1.0.1-xingying.1.apk` | 完整安装包（约 90 MB，V1/V2/V3 已签名） |
 
 > 该 APK 使用自签证书，与任何官方/第三方版本签名不同，
 > 因此是**独立应用**，不会覆盖手机上已有的同类应用。
