@@ -5,7 +5,7 @@
 set -euo pipefail
 
 INSTALLER_OWNER="firefiy99"
-INSTALLER_REPO="lyra-astrbot-snowluma-app"
+INSTALLER_REPO="shuxi-snowluma-app"
 INSTALLER_FORMAT="astrbot-android-installer-v1"
 BOOTSTRAP_VERSION="0.1.0"
 STATE_DIR="/root/.astrbot-android/installer"

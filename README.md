@@ -4,7 +4,7 @@
 
 - 应用名：**星枢**
 - 包名：`com.firefiy99.astrbot_snow`
-- 当前版本：`1.0.8`（versionCode 14）
+- 当前版本：`1.0.9`（versionCode 15）
 - 作者：**小星萤** ｜ QQ **3010009516** ｜ [@firefiy99](https://github.com/firefiy99)
 
 ## 下载
@@ -13,7 +13,7 @@
 
 | 资产 | 用途 |
 |---|---|
-| `shuxi-v1.0.8.apk` | **Android 安装包**（约 90 MB，V1/V2/V3 已签名） |
+| `shuxi-v1.0.9.apk` | **Android 安装包**（约 90 MB，V1/V2/V3 已签名） |
 | `astrbot-installer-v1.1.0.tar.gz` | 安装脚本包（Ed25519 验签） |
 | `manifest.json` / `manifest.sig` | 清单与签名 |
 | `snowluma-guest-v1.0.0.tar.xz` | 虚拟机系统包（内核 + initramfs + rootfs，约 93 MB） |

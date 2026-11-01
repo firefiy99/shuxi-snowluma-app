@@ -24,7 +24,7 @@ VM_DIR="$HOME/snowluma-vm"
 GUEST_DIR="$VM_DIR/guest"
 DISK_IMG="$VM_DIR/disk.img"
 GUEST_SET="snowluma-guest-v1.0.0"
-ASSET_BASE="${ASTRBOT_ASSET_BASE:-https://github.com/firefiy99/lyra-astrbot-snowluma-app/releases/latest/download}"
+ASSET_BASE="${ASTRBOT_ASSET_BASE:-https://github.com/firefiy99/shuxi-snowluma-app/releases/latest/download}"
 
 export UV_LINK_MODE=copy
 export UV_DEFAULT_INDEX="https://pypi.tuna.tsinghua.edu.cn/simple"
