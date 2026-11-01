@@ -28,7 +28,7 @@ ASSET_BASE="${ASTRBOT_ASSET_BASE:-https://github.com/firefiy99/shuxi-snowluma-ap
 
 export UV_LINK_MODE=copy
 export UV_DEFAULT_INDEX="https://pypi.tuna.tsinghua.edu.cn/simple"
-export UV_PYTHON_INSTALL_MIRROR="https://ghfast.top/https://github.com/astral-sh/python-build-standalone/releases/download"
+export UV_PYTHON_INSTALL_MIRROR="${UV_PYTHON_INSTALL_MIRROR:-https://gh-proxy.com/https://github.com/astral-sh/python-build-standalone/releases/download}"
 
 if [ -z "$TMPDIR" ]; then
   echo "错误：未检测到 TMPDIR，请在挂载共享目录时传入 TMPDIR"
@@ -39,6 +39,29 @@ if [ ! -d "$TMPDIR" ]; then
   echo "错误：临时目录 $TMPDIR 不存在，请确认挂载已经完成"
   exit 1
 fi
+
+# 把 apt 源切到国内镜像（Ubuntu 官方源在国内装 qemu 这类大包经常超时）
+setup_apt_mirror(){
+  local f changed=0
+  for f in /etc/apt/sources.list.d/ubuntu.sources /etc/apt/sources.list; do
+    [ -f "$f" ] || continue
+    grep -qE 'archive\.ubuntu\.com|security\.ubuntu\.com|ports\.ubuntu\.com' "$f" 2>/dev/null || continue
+    [ -f "$f.bak" ] || cp "$f" "$f.bak" 2>/dev/null || true
+    sed -i \
+      -e 's|http://ports\.ubuntu\.com/ubuntu-ports|https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports|g' \
+      -e 's|http://archive\.ubuntu\.com/ubuntu|https://mirrors.tuna.tsinghua.edu.cn/ubuntu|g' \
+      -e 's|http://security\.ubuntu\.com/ubuntu|https://mirrors.tuna.tsinghua.edu.cn/ubuntu|g' \
+      -e 's|https://ports\.ubuntu\.com/ubuntu-ports|https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports|g' \
+      -e 's|https://archive\.ubuntu\.com/ubuntu|https://mirrors.tuna.tsinghua.edu.cn/ubuntu|g' \
+      -e 's|https://security\.ubuntu\.com/ubuntu|https://mirrors.tuna.tsinghua.edu.cn/ubuntu|g' \
+      "$f"
+    changed=1
+    echo "  apt 源已切到清华镜像：$f"
+  done
+  if [ $changed -eq 0 ]; then
+    echo "  apt 源无需修改"
+  fi
+}
 
 progress_echo(){
   echo -e "\033[31m- $@\033[0m"
@@ -100,7 +123,8 @@ install_sudo_curl_git(){
   progress_echo "基础命令缺失: ${missing[*]}, 开始安装..."
 
   export DEBIAN_FRONTEND=noninteractive
-  apt_opts="-o Acquire::ForceIPv4=true"
+  setup_apt_mirror
+  apt_opts="-o Acquire::ForceIPv4=true -o Acquire::http::Timeout=25 -o Acquire::https::Timeout=25 -o Acquire::Retries=3"
 
   if ! apt-get $apt_opts update; then
     echo "apt-get update 失败，继续尝试安装..."
@@ -171,6 +195,48 @@ network_test() {
     fi
 }
 
+# 大文件下载：断点续传 + 多镜像轮换
+# 应对 GitHub Release 在移动网络下频繁中断（curl 56 Recv failure）
+# 用法: dl_fetch <github原始URL> <输出文件> [xz|gz|none]
+dl_fetch(){
+  local url="$1" out="$2" verify="${3:-none}"
+  local mirrors=("https://gh-proxy.com/" "https://ghfast.top/" "" "https://ghproxy.net/")
+  local total=${#mirrors[@]} idx=0 m full sz prev attempt stalled ok
+  for m in "${mirrors[@]}"; do
+    idx=$((idx+1))
+    full="${m}${url}"
+    attempt=0
+    stalled=0
+    while [ $attempt -lt 10 ]; do
+      attempt=$((attempt+1))
+      if [ -f "$out" ]; then prev=$(stat -c %s "$out" 2>/dev/null || echo 0); else prev=0; fi
+      curl -fL -C - --connect-timeout 8 --max-time 60 -sS -o "$out" "$full" 2>/dev/null
+      if [ -f "$out" ]; then sz=$(stat -c %s "$out" 2>/dev/null || echo 0); else sz=0; fi
+      ok=1
+      case "$verify" in
+        xz) xz -t "$out" >/dev/null 2>&1 || ok=0 ;;
+        gz) gzip -t "$out" >/dev/null 2>&1 || ok=0 ;;
+        *)  [ "$sz" -gt 0 ] 2>/dev/null || ok=0 ;;
+      esac
+      if [ $ok -eq 1 ]; then
+        echo "  下载完成：${sz} 字节（通道 ${idx}/${total}）"
+        return 0
+      fi
+      if [ "$sz" -le "$prev" ] 2>/dev/null; then
+        stalled=$((stalled+1))
+        echo "    无进展（${sz} 字节，第 ${attempt} 次）"
+        [ $stalled -ge 2 ] && break
+      else
+        stalled=0
+        echo "    已 ${sz} 字节，继续续传"
+      fi
+      sleep 1
+    done
+    echo "  [通道 ${idx}/${total}] ${m:-直连} 不可用（保留已下载 ${sz:-0} 字节，换源续传）"
+  done
+  return 1
+}
+
 install_uv(){
   local INSTALL_DIR="$HOME/.local/bin"
   if [ -x "$INSTALL_DIR/uv" ]; then
@@ -182,11 +248,11 @@ install_uv(){
   [ -z "${target_proxy+x}" ] && network_test
   local APP_VERSION="0.9.9"
   local ARCHIVE_FILE="uv-aarch64-unknown-linux-gnu.tar.gz"
-  local DOWNLOAD_URL="${target_proxy:+${target_proxy}/}https://github.com/astral-sh/uv/releases/download/${APP_VERSION}/${ARCHIVE_FILE}"
+  local DOWNLOAD_URL="https://github.com/astral-sh/uv/releases/download/${APP_VERSION}/${ARCHIVE_FILE}"
   local TMP_UV
   TMP_UV="$(mktemp -d)"
 
-  if ! curl -fL --connect-timeout 20 --retry 3 --retry-delay 2 -o "$TMP_UV/$ARCHIVE_FILE" "$DOWNLOAD_URL"; then
+  if ! dl_fetch "$DOWNLOAD_URL" "$TMP_UV/$ARCHIVE_FILE" gz; then
     echo "uv 下载失败: $DOWNLOAD_URL"
     rm -rf "$TMP_UV"
     exit 1
@@ -224,6 +290,7 @@ install_uv(){
 # ============================================================
 # QQ 运行环境：QEMU 虚拟机 + Debian guest
 # ============================================================
+
 apt_ensure(){
   export DEBIAN_FRONTEND=noninteractive
   local pkgs=("$@")
@@ -235,8 +302,10 @@ apt_ensure(){
     return 0
   fi
   echo "安装依赖: ${need[*]}"
-  apt-get -o Acquire::ForceIPv4=true update || true
-  apt-get -o Acquire::ForceIPv4=true install -y "${need[@]}" || return 1
+  setup_apt_mirror
+  local AOPTS="-o Acquire::ForceIPv4=true -o Acquire::http::Timeout=25 -o Acquire::https::Timeout=25 -o Acquire::Retries=3"
+  apt-get $AOPTS update || echo "  apt update 有警告，继续尝试安装"
+  apt-get $AOPTS install -y "${need[@]}" || return 1
   return 0
 }
 
@@ -266,7 +335,7 @@ check_vm_ready(){
 
 fetch_guest_system(){
   local asset="$GUEST_SET.tar.xz"
-  local url="${target_proxy:+${target_proxy}/}${ASSET_BASE}/${asset}"
+  local url="${ASSET_BASE}/${asset}"
   local out="$VM_DIR/$asset"
 
   if [ -f "$GUEST_DIR/vmlinuz" ] && [ -f "$GUEST_DIR/initrd.img" ] && [ -f "$GUEST_DIR/rootfs.tar" ]; then
@@ -278,8 +347,10 @@ fetch_guest_system(){
   progress_echo "下载 QQ 运行环境系统镜像（约 250MB）"
   echo "下载地址: $url"
 
-  if ! curl -fL --connect-timeout 20 --retry 3 --retry-delay 3 -o "$out" "$url"; then
-    echo "系统镜像下载失败。请检查网络，或设置 ASTRBOT_ASSET_BASE 指向可用镜像。"
+  if ! dl_fetch "$url" "$out" xz; then
+    echo "系统镜像下载失败（已尝试 4 个通道）。"
+    echo "可手动下载后放入：$out"
+    echo "  $url"
     return 1
   fi
 
@@ -305,7 +376,7 @@ build_disk(){
     return 0
   fi
   progress_echo "创建 QQ 运行环境磁盘（首次约需 1-3 分钟）"
-  local size="${SNOWLUMA_DISK_SIZE:-6G}"
+  local size="${SNOWLUMA_DISK_SIZE:-3G}"
   if ! truncate -s "$size" "$DISK_IMG" 2>/dev/null; then
     dd if=/dev/zero of="$DISK_IMG" bs=1M count=0 seek=6144 2>/dev/null || return 1
   fi
@@ -417,8 +488,8 @@ install_astrbot(){
       if ! git clone --depth=1 "$git_url" "$HOME/AstrBot_tmp"; then
         echo "git clone 失败，尝试使用 API 打包下载"
         rm -rf "$HOME/AstrBot_tmp" "$HOME/AstrBot.zip"
-        local tar_url="${target_proxy:+${target_proxy}/}https://api.github.com/repos/AstrBotDevs/AstrBot/tarball/master"
-        if ! curl -fL --connect-timeout 20 --retry 3 -o "$HOME/AstrBot.tar.gz" "$tar_url"; then
+        local tar_url="https://api.github.com/repos/AstrBotDevs/AstrBot/tarball/master"
+        if ! dl_fetch "$tar_url" "$HOME/AstrBot.tar.gz" gz; then
           echo "AstrBot 源码下载失败"
           exit 1
         fi
