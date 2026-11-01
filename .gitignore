@@ -1,4 +1,10 @@
 build/
-*.apk
-*.zip
+release/
+*.tar.xz
+*.tar.gz
+tools/keys/
+*.pem
 *.log
+*.tmp
+*.apk
+*_git/
